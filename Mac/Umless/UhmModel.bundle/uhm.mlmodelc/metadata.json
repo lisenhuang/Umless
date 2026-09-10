@@ -1,0 +1,87 @@
+[
+  {
+    "metadataOutputVersion" : "3.0",
+    "shortDescription" : "Uhm filler detector (base tier) — distilhubert 6-class frame classifier at 50fps over 30s windows of 16kHz mono — temperature-calibrated (T=1.900)",
+    "outputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Float16",
+        "formattedType" : "MultiArray (Float16 1 × 1499 × 6)",
+        "shortDescription" : "",
+        "shape" : "[1, 1499, 6]",
+        "name" : "probs",
+        "type" : "MultiArray"
+      }
+    ],
+    "storagePrecision" : "Float16",
+    "modelParameters" : [
+
+    ],
+    "specificationVersion" : 8,
+    "mlProgramOperationTypeHistogram" : {
+      "Ios17.mul" : 4,
+      "Ios17.sqrt" : 1,
+      "Ios17.square" : 1,
+      "Ios17.transpose" : 11,
+      "Ios17.sub" : 1,
+      "Ios17.linear" : 14,
+      "Ios17.conv" : 8,
+      "Ios17.matmul" : 4,
+      "Ios17.add" : 7,
+      "Ios17.realDiv" : 1,
+      "Ios16.reduceMean" : 2,
+      "Ios17.sliceByIndex" : 1,
+      "Ios16.softmax" : 3,
+      "Ios16.gelu" : 10,
+      "Ios17.expandDims" : 1,
+      "Ios17.reshape" : 18,
+      "Ios17.cast" : 1,
+      "Ios17.layerNorm" : 6
+    },
+    "computePrecision" : "Mixed (Float16, Int32)",
+    "isUpdatable" : "0",
+    "stateSchema" : [
+
+    ],
+    "availability" : {
+      "macOS" : "14.0",
+      "tvOS" : "17.0",
+      "visionOS" : "1.0",
+      "watchOS" : "10.0",
+      "iOS" : "17.0",
+      "macCatalyst" : "17.0"
+    },
+    "modelType" : {
+      "name" : "MLModelType_mlProgram"
+    },
+    "inputSchema" : [
+      {
+        "hasShapeFlexibility" : "0",
+        "isOptional" : "0",
+        "dataType" : "Float32",
+        "formattedType" : "MultiArray (Float32 1 × 480000)",
+        "shortDescription" : "",
+        "shape" : "[1, 480000]",
+        "name" : "audio",
+        "type" : "MultiArray"
+      }
+    ],
+    "userDefinedMetadata" : {
+      "com.github.apple.coremltools.version" : "8.2",
+      "base_model" : "ntu-spml\/distilhubert",
+      "labels" : "[\"not_filler\", \"uh\", \"um\", \"hmm\", \"and\", \"other\"]",
+      "sample_rate" : "16000",
+      "frame_hop" : "320",
+      "model_family" : "distilhubert",
+      "uhm_tier" : "base",
+      "max_samples" : "480000",
+      "calibration_temperature" : "1.9000",
+      "com.github.apple.coremltools.source_dialect" : "TorchScript",
+      "com.github.apple.coremltools.source" : "torch==2.4.1",
+      "calibrated_against" : "\/Volumes\/PV Media 2TB\/swift-filler-train\/runs\/uhm-distil-2l-hint-v1\/final-patched"
+    },
+    "generatedClassName" : "uhm",
+    "method" : "predict"
+  }
+]
