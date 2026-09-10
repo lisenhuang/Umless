@@ -51,20 +51,16 @@ nonisolated enum VideoExporter {
         reader.add(videoOutput)
 
         var audioOutput: AVAssetReaderAudioMixOutput?
+        var audioFormat: AudioFormat?
         if let audioTrack = try await composition.loadTracks(withMediaType: .audio).first {
-            let output = AVAssetReaderAudioMixOutput(audioTracks: [audioTrack], audioSettings: [
-                AVFormatIDKey: kAudioFormatLinearPCM,
-                AVSampleRateKey: source.audioSampleRate,
-                AVNumberOfChannelsKey: source.audioChannels,
-                AVLinearPCMBitDepthKey: 32,
-                AVLinearPCMIsFloatKey: true,
-                AVLinearPCMIsBigEndianKey: false,
-                AVLinearPCMIsNonInterleaved: false,
-            ])
+            let format = await AudioFormat(track: audioTrack, source: source)
+            let output = AVAssetReaderAudioMixOutput(
+                audioTracks: [audioTrack], audioSettings: format.decodeSettings)
             output.alwaysCopiesSampleData = false
             if reader.canAdd(output) {
                 reader.add(output)
                 audioOutput = output
+                audioFormat = format
             }
         }
 
@@ -83,13 +79,9 @@ nonisolated enum VideoExporter {
         writer.add(videoInput)
 
         var audioInput: AVAssetWriterInput?
-        if audioOutput != nil {
-            let input = AVAssetWriterInput(mediaType: .audio, outputSettings: [
-                AVFormatIDKey: kAudioFormatMPEG4AAC,
-                AVSampleRateKey: source.audioSampleRate,
-                AVNumberOfChannelsKey: source.audioChannels,
-                AVEncoderBitRateKey: source.audioChannels > 1 ? 256_000 : 128_000,
-            ])
+        if let audioFormat {
+            let input = AVAssetWriterInput(
+                mediaType: .audio, outputSettings: audioFormat.encodeSettings)
             input.expectsMediaDataInRealTime = false
             if writer.canAdd(input) {
                 writer.add(input)
@@ -115,13 +107,15 @@ nonisolated enum VideoExporter {
         do {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 group.addTask {
-                    try await pump(output: videoOutput, into: videoInput, label: "video") { pts in
+                    try await pump(output: videoOutput, into: videoInput, label: "video",
+                                   writerError: { writer.error }) { pts in
                         tracker.send(pts / total)
                     }
                 }
                 if let audioOutput, let audioInput {
                     group.addTask {
-                        try await pump(output: audioOutput, into: audioInput, label: "audio")
+                        try await pump(output: audioOutput, into: audioInput, label: "audio",
+                                       writerError: { writer.error })
                     }
                 }
                 try await group.waitForAll()
@@ -208,6 +202,7 @@ nonisolated enum VideoExporter {
         output: AVAssetReaderOutput,
         into input: AVAssetWriterInput,
         label: String,
+        writerError: @escaping @Sendable () -> Error?,
         onSample: (@Sendable (Double) -> Void)? = nil
     ) async throws {
         let queue = DispatchQueue(label: "com.lisenhuang.Umless.export.\(label)")
@@ -229,7 +224,13 @@ nonisolated enum VideoExporter {
                         let pts = CMSampleBufferGetPresentationTimeStamp(buffer).seconds
                         guard input.append(buffer) else {
                             input.markAsFinished()
-                            gate.finish(.failure(UmlessError.writeFailed("\(label) sample rejected")))
+                            // A false return only says the append failed; the
+                            // reason lives on the writer, and the cancel that
+                            // follows this throws it away. Read it here, while
+                            // it still exists, so the user sees why.
+                            let reason = writerError()?.localizedDescription
+                                ?? "\(label) sample rejected"
+                            gate.finish(.failure(UmlessError.writeFailed(reason)))
                             return
                         }
                         onSample?(pts)
@@ -273,6 +274,87 @@ nonisolated enum VideoExporter {
         }
     }
 
+}
+
+// MARK: - Audio format
+
+/// The single audio configuration used at both ends of the export: what the
+/// reader decodes the composition to, and what the writer encodes back out.
+///
+/// One type on purpose. The two settings dictionaries have to agree, and a
+/// disagreement is not reported where it is made — `canAdd` still returns true
+/// and `startWriting` still succeeds, and the export only fails on the first
+/// `append`, by which point the reason has to be dug out of the writer.
+private struct AudioFormat {
+    let sampleRate: Double
+    let channels: Int
+    /// The source's own channel layout, which AAC requires above stereo.
+    let layout: Data?
+
+    init(track: AVAssetTrack, source: SourceVideo) async {
+        let description = (try? await track.load(.formatDescriptions))?.first
+        let layout = description.flatMap(Self.channelLayout)
+        let sourceChannels = max(1, source.audioChannels)
+
+        // AAC will not encode more than two channels without being told how
+        // they are arranged. A file that arrives multichannel but layout-less
+        // folds down to stereo rather than being handed to the encoder in a
+        // shape it refuses.
+        self.channels = sourceChannels > 2 && layout == nil ? 2 : sourceChannels
+        self.layout = self.channels == sourceChannels ? layout : nil
+        // Containers that under-report the rate would otherwise carry a
+        // nonsense one straight into the encoder.
+        self.sampleRate = source.audioSampleRate >= 8_000 ? source.audioSampleRate : 48_000
+    }
+
+    /// Signed 16-bit, interleaved — deliberately, and not the float PCM that
+    /// would otherwise be the natural choice for an intermediate.
+    ///
+    /// iOS encodes AAC in hardware, and that encoder takes packed Int16 and
+    /// nothing else: give it Float32 and every `append` on the audio input
+    /// returns false. The simulator, which encodes in software, accepts either,
+    /// which is why the round-trip tests never caught this and only exports on
+    /// a real device failed.
+    var decodeSettings: [String: Any] {
+        var settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: channels,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false,
+        ]
+        if let layout { settings[AVChannelLayoutKey] = layout }
+        return settings
+    }
+
+    var encodeSettings: [String: Any] {
+        var settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: channels,
+            AVEncoderBitRateKey: bitRate,
+        ]
+        if let layout { settings[AVChannelLayoutKey] = layout }
+        return settings
+    }
+
+    /// 128 kbps a channel, capped at what AAC-LC can actually carry: it holds
+    /// 6144 bits per channel per 1024-sample frame, so the ceiling falls with
+    /// the sample rate. A 16 kHz track cannot take the 256 kbps a 48 kHz one
+    /// can, and asking anyway is refused at `append` time like everything else
+    /// here.
+    private var bitRate: Int {
+        min(channels > 1 ? 256_000 : 128_000, Int(6 * sampleRate * Double(channels)))
+    }
+
+    private static func channelLayout(_ description: CMFormatDescription) -> Data? {
+        var size = 0
+        guard let layout = CMAudioFormatDescriptionGetChannelLayout(description, sizeOut: &size),
+              size > 0 else { return nil }
+        return Data(bytes: layout, count: size)
+    }
 }
 
 // MARK: - Format matching

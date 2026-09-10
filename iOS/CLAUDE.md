@@ -23,7 +23,7 @@ sed -i '' 's/CURRENT_PROJECT_VERSION = 1;/CURRENT_PROJECT_VERSION = 2;/g;
   Umless.xcodeproj/project.pbxproj
 ```
 
-**macOS and iOS carry the same version.** Bump the sibling project (`~/Desktop/practice/Umless`) to
+**macOS and iOS carry the same version.** Bump the sibling project (`../Mac`) to
 match, whether or not its code changed. If the two have drifted, raise both to
 the higher of the two and carry on from there.
 
@@ -31,8 +31,8 @@ the higher of the two and carry on from there.
 
 The app is two independent Xcode projects with no shared package:
 
-- macOS — `~/Desktop/practice/Umless`
-- iOS — `~/Desktop/Umless-iOS`
+- macOS — `../Mac`
+- iOS — `../iOS` (here)
 
 Twelve engine files are **byte-identical copies** in both `Umless/` folders:
 `SourceVideo`, `AudioExtractor`, `CutPlan`, `VideoExporter`, `FillerAnalyzer`,
