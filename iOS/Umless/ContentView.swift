@@ -108,7 +108,7 @@ struct ContentView: View {
             FillerListView(model: model)
                 .frame(maxHeight: .infinity)
         }
-        .safeAreaInset(edge: .bottom) { exportBar }
+        .safeAreaInset(edge: .bottom, spacing: 0) { exportBar }
     }
 
     private var transport: some View {
@@ -172,12 +172,29 @@ struct ContentView: View {
         .padding(.vertical, 12)
     }
 
+    /// Pinned below the list rather than carried inside it: the summary and the
+    /// export button stay reachable however far the list is scrolled.
+    ///
+    /// `safeAreaInset` holds it out of the scrolling content while still
+    /// letting rows travel underneath. The divider is what makes that read
+    /// correctly — without one, a half-scrolled row is simply sliced off at the
+    /// bar's edge and the result looks like clipped content rather than a fixed
+    /// footer. The background is drawn separately so it can run past the home
+    /// indicator; left to the bar's own bounds it stops short of the screen
+    /// edge and leaves a strip of list showing beneath.
     private var exportBar: some View {
-        ExportBar(model: model)
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
-            .background(.bar)
+        VStack(spacing: 0) {
+            Divider()
+            ExportBar(model: model)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 6)
+        }
+        .background {
+            Rectangle()
+                .fill(.bar)
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 
     /// Skips to the next/previous marker so every cut can be auditioned without
