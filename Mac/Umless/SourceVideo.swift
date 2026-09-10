@@ -49,6 +49,16 @@ nonisolated struct SourceVideo: Sendable, Identifiable {
     let colorProperties: [String: String]?
     let duration: CMTime
     let hasAudio: Bool
+    /// The rate and channel count the audio **decodes to**, which is not always
+    /// what the track's format description advertises.
+    ///
+    /// That description carries the *encoded* format, and for anything built on
+    /// a base layer it describes the base: HE-AAC reports half the real sample
+    /// rate (spectral band replication supplies the rest), HE-AAC v2 also
+    /// reports half the channels (parametric stereo supplies the rest). Taking
+    /// those numbers at face value resamples the export to half rate — and
+    /// hands the encoder a bit rate that is legal at 44.1 kHz but refused at
+    /// 22.05, which surfaces as a failed export rather than a rejected setting.
     let audioSampleRate: Double
     let audioChannels: Int
 
@@ -111,10 +121,17 @@ nonisolated struct SourceVideo: Sendable, Identifiable {
         let audioTrack = try await asset.loadTracks(withMediaType: .audio).first
         var sampleRate = 48_000.0
         var channels = 2
-        if let audioTrack, let desc = try await audioTrack.load(.formatDescriptions).first,
-           let basic = CMAudioFormatDescriptionGetStreamBasicDescription(desc)?.pointee {
-            sampleRate = basic.mSampleRate
-            channels = Int(basic.mChannelsPerFrame)
+        if let audioTrack {
+            // What the decoder produces, in preference to what the track says
+            // it will — see `decodedAudioFormat`.
+            if let decoded = decodedAudioFormat(of: asset, track: audioTrack) {
+                (sampleRate, channels) = decoded
+            } else if let desc = try await audioTrack.load(.formatDescriptions).first,
+                      let basic = CMAudioFormatDescriptionGetStreamBasicDescription(desc)?.pointee,
+                      basic.mSampleRate > 0 {
+                sampleRate = basic.mSampleRate
+                channels = Int(basic.mChannelsPerFrame)
+            }
         }
 
         return SourceVideo(
@@ -135,6 +152,33 @@ nonisolated struct SourceVideo: Sendable, Identifiable {
             audioChannels: max(1, channels)
         )
     }
+}
+
+private nonisolated func decodedAudioFormat(
+    of asset: AVAsset, track: AVAssetTrack
+) -> (sampleRate: Double, channels: Int)? {
+    guard let reader = try? AVAssetReader(asset: asset) else { return nil }
+    // Deliberately no rate and no channel count in the settings: left to
+    // choose, the decoder reports what it really produces, which is the
+    // number we are after.
+    let output = AVAssetReaderTrackOutput(track: track, outputSettings: [
+        AVFormatIDKey: kAudioFormatLinearPCM,
+        AVLinearPCMBitDepthKey: 16,
+        AVLinearPCMIsFloatKey: false,
+        AVLinearPCMIsBigEndianKey: false,
+        AVLinearPCMIsNonInterleaved: false,
+    ])
+    guard reader.canAdd(output) else { return nil }
+    reader.add(output)
+    guard reader.startReading() else { return nil }
+    defer { reader.cancelReading() }
+
+    guard let buffer = output.copyNextSampleBuffer(),
+          let description = CMSampleBufferGetFormatDescription(buffer),
+          let basic = CMAudioFormatDescriptionGetStreamBasicDescription(description)?.pointee,
+          basic.mSampleRate > 0, basic.mChannelsPerFrame > 0
+    else { return nil }
+    return (basic.mSampleRate, Int(basic.mChannelsPerFrame))
 }
 
 nonisolated extension AVVideoCodecType {

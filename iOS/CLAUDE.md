@@ -37,8 +37,12 @@ The app is two independent Xcode projects with no shared package:
 Twelve engine files are **byte-identical copies** in both `Umless/` folders:
 `SourceVideo`, `AudioExtractor`, `CutPlan`, `VideoExporter`, `FillerAnalyzer`,
 `UmlessError`, `ProgressThrottle`, `Localization`, `PlayerController`,
-`AppModel`, `TimelineBar`, `Appearance` — as are `UhmModel.bundle` and
-`Localizable.xcstrings`. Change one and you must copy it across; `diff` the two
+`AppModel`, `TimelineBar`, `Appearance` — as is `UhmModel.bundle`.
+
+`Localizable.xcstrings` is **not** one of them: the shared keys carry identical
+translations, but each platform adds its own copy ("this Mac's Neural Engine"
+against "this device's", "Show in Finder" against "Save to Photos"). Add a key
+to the side that uses it; never copy the catalogue across. Change one and you must copy it across; `diff` the two
 `Umless/` folders before calling the change done.
 
 Platform-specific: macOS has `Sidebar.swift`; iOS has `ExportBar.swift` and

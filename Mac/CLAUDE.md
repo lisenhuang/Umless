@@ -23,7 +23,7 @@ sed -i '' 's/CURRENT_PROJECT_VERSION = 1;/CURRENT_PROJECT_VERSION = 2;/g;
   Umless.xcodeproj/project.pbxproj
 ```
 
-**macOS and iOS carry the same version.** Bump the sibling project (`~/Desktop/Umless-iOS`) to
+**macOS and iOS carry the same version.** Bump the sibling project (`../iOS`) to
 match, whether or not its code changed. If the two have drifted, raise both to
 the higher of the two and carry on from there.
 
@@ -31,14 +31,18 @@ the higher of the two and carry on from there.
 
 The app is two independent Xcode projects with no shared package:
 
-- macOS — `~/Desktop/practice/Umless`
-- iOS — `~/Desktop/Umless-iOS`
+- macOS — `../Mac` (here)
+- iOS — `../iOS`
 
 Twelve engine files are **byte-identical copies** in both `Umless/` folders:
 `SourceVideo`, `AudioExtractor`, `CutPlan`, `VideoExporter`, `FillerAnalyzer`,
 `UmlessError`, `ProgressThrottle`, `Localization`, `PlayerController`,
-`AppModel`, `TimelineBar`, `Appearance` — as are `UhmModel.bundle` and
-`Localizable.xcstrings`. Change one and you must copy it across; `diff` the two
+`AppModel`, `TimelineBar`, `Appearance` — as is `UhmModel.bundle`.
+
+`Localizable.xcstrings` is **not** one of them: the shared keys carry identical
+translations, but each platform adds its own copy ("this Mac's Neural Engine"
+against "this device's", "Show in Finder" against "Save to Photos"). Add a key
+to the side that uses it; never copy the catalogue across. Change one and you must copy it across; `diff` the two
 `Umless/` folders before calling the change done.
 
 Platform-specific: macOS has `Sidebar.swift`; iOS has `ExportBar.swift` and
