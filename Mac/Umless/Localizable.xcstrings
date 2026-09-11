@@ -1392,6 +1392,29 @@
         }
       }
     },
+    "Uhm model by Desert Ant Labs": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uhm model by Desert Ant Labs"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uhm 模型由 Desert Ant Labs 提供"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uhm 模型由 Desert Ant Labs 提供"
+          }
+        }
+      }
+    },
     "Umless": {},
     "Umless listens for “um”, “uh” and “hmm”, shows you each one,\nand exports a cut at the original resolution and frame rate.": {
       "extractionState": "manual",

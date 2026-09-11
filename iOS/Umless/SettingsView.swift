@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var appearance = Appearance.shared
     @Environment(\.dismiss) private var dismiss
 
+    private static let vendor = URL(string: "https://desertant.com")!
+
     var body: some View {
         NavigationStack {
             Form {
@@ -34,7 +36,14 @@ struct SettingsView: View {
                 Section {
                     LabeledContent(loc("Filler detection"), value: "Uhm · on-device")
                 } footer: {
-                    Text(loc("Runs entirely on your device — nothing is uploaded."))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(loc("Runs entirely on your device — nothing is uploaded."))
+                        // Naming Desert Ant Labs is a condition of the model's
+                        // licence. A settings footer is the placement its
+                        // attribution guide asks for, and the least obtrusive
+                        // one that still counts.
+                        Link(loc("Uhm model by Desert Ant Labs"), destination: Self.vendor)
+                    }
                 }
             }
             .navigationTitle(loc("Settings"))

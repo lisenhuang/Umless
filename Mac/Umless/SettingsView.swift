@@ -31,6 +31,15 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Naming Desert Ant Labs is a condition of the model's licence;
+            // this is the quietest placement that still satisfies it.
+            Link(loc("Uhm model by Desert Ant Labs"),
+                 destination: URL(string: "https://desertant.com")!)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 12)
+        }
         .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
     }

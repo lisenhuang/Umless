@@ -7,6 +7,20 @@ downloaded, no account.
 
 ---
 
+## 📺 See it in action
+
+A screen recording of the iPhone app, start to finish — pick a video, review
+what it heard, export.
+
+<a href="https://www.youtube.com/shorts/weP7U6hnRyg">
+  <img src="https://img.youtube.com/vi/weP7U6hnRyg/maxresdefault.jpg"
+       width="600" alt="Umless on iPhone — screen recording">
+</a>
+
+▶️ **[Watch on YouTube](https://www.youtube.com/shorts/weP7U6hnRyg)**
+
+---
+
 ## ⚡️ How it works
 
 ```
@@ -36,13 +50,35 @@ point is that yours survive.
 
 ---
 
+## 🧠 The model
+
+Filler detection is **[Uhm](https://desertant.com/models/uhm/)** by
+**[Desert Ant Labs](https://desertant.com)** — a 45 MB Core ML model bundled in
+the app, loaded through the `desert-ant-core` SwiftPM package.
+
+### Commercial use: allowed, with conditions
+
+Licence is [**DAL Source-Available 1.0**](https://license.desertant.com/1.0)
+(`LicenseRef-DAL-Source-Available-1.0`) — source-available, **not** open source.
+Commercial shipping is explicitly what it's for.
+
+| | |
+| --- | --- |
+| 💰 **Free tier** | below **100,000 monthly active devices**, per platform, per model |
+| 📈 **Above that** | commercial licence needed — licensing@desertant.com |
+| 🖥 **iOS + macOS** | counted **separately** — 100k each |
+| ♾️ **Term** | perpetual, doesn't expire |
+| ⚖️ **Law** | Netherlands / Amsterdam courts |
+
+---
+
 ## 📦 What's in the box
 
 | | |
 | --- | --- |
 | 🖥 **macOS** | `Mac/Umless.xcodeproj` |
 | 📱 **iOS** | `iOS/Umless.xcodeproj` |
-| 🧠 **Model** | `Umless/UhmModel.bundle` — 45 MB, ships inside the app |
+| 🧠 **Model** | `Umless/UhmModel.bundle` — [Uhm](https://desertant.com/models/uhm/) by Desert Ant Labs, 45 MB, ships inside the app |
 | 🌍 **Languages** | English, 简体中文 |
 
 Two independent Xcode projects. No workspace, no shared package — twelve engine
