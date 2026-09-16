@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import StoreKit
 import SwiftUI
 import UniformTypeIdentifiers
 import Uhm
@@ -11,6 +12,8 @@ import Uhm
 /// Source info, the two tuning controls, the reviewable list, and export.
 struct Sidebar: View {
     @Bindable var model: AppModel
+
+    @Environment(\.requestReview) private var requestReview
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +27,13 @@ struct Sidebar: View {
             exportFooter
         }
         .background(.background)
+        // A finished export *is* the delivered video here: the user picked the
+        // destination up front, so there is no second save step the way there
+        // is on iOS.
+        .onChange(of: model.exportedURL) { _, url in
+            guard url != nil, ReviewPrompt.recordFinishedVideo() else { return }
+            requestReview()
+        }
     }
 
     // MARK: Source

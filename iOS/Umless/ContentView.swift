@@ -14,6 +14,10 @@ struct ContentView: View {
     @State private var isImportingFile = false
     @State private var isShowingSettings = false
     @State private var isImportingFromPicker = false
+    @State private var newVersion: String?
+    /// When the store was last asked, so a launch check happens about daily
+    /// rather than on every cold start.
+    @AppStorage("releaseCheck.lastChecked") private var lastChecked = 0.0
 
     var body: some View {
         NavigationStack {
@@ -44,6 +48,13 @@ struct ContentView: View {
                 }
             }
         }
+        .task { await checkForUpdateQuietly() }
+        .sheet(item: Binding(get: { newVersion.map(Version.init) },
+                             set: { if $0 == nil { newVersion = nil } })) { version in
+            UpdateAvailableSheet(version: version.value)
+                .presentationDetents([.height(300)])
+                .preferredColorScheme(Appearance.shared.theme.colorScheme)
+        }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
                 .preferredColorScheme(Appearance.shared.theme.colorScheme)
@@ -70,6 +81,22 @@ struct ContentView: View {
         } message: {
             Text(model.errorMessage ?? "")
         }
+    }
+
+    /// Asks the store whether there is a newer build, about once a day.
+    ///
+    /// Silent by design: it raises a sheet only when there is something to act
+    /// on. A failed check, or a store that does not list the app yet, says
+    /// nothing at all — an error about a background check the user never asked
+    /// for is noise. The Settings button is there for anyone who wants to ask
+    /// on purpose.
+    private func checkForUpdateQuietly() async {
+        let now = Date.now.timeIntervalSince1970
+        guard now - lastChecked > 60 * 60 * 24 else { return }
+        if case .updateAvailable(let version) = await ReleaseCheck.latest() {
+            newVersion = version
+        }
+        lastChecked = now
     }
 
     /// Copies the picked video out of Photos, then hands the URL to the model.
@@ -206,6 +233,63 @@ struct ContentView: View {
             ? markers.first { $0.start > now + 0.05 }
             : markers.last { $0.start < now - 0.4 }
         if let target { model.player.playFrom(target.start) }
+    }
+}
+
+/// Wraps the version string so `.sheet(item:)` can carry it.
+private struct Version: Identifiable {
+    let value: String
+    var id: String { value }
+}
+
+/// Offered when the store has a build newer than this one.
+///
+/// The app cannot update itself, so the only thing this can usefully do is hand
+/// the user to the App Store — and let them decline, since nothing here is
+/// broken and the export they are part-way through still works.
+private struct UpdateAvailableSheet: View {
+    let version: String
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 8)
+
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.tint)
+                .padding(.bottom, 16)
+
+            Text(loc("Update Available"))
+                .font(.title2.weight(.semibold))
+                .padding(.bottom, 6)
+
+            Text(String(format: loc("Version %1$@ is on the App Store. You have %2$@."),
+                        version, ReleaseCheck.installedVersion))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Spacer(minLength: 16)
+
+            VStack(spacing: 8) {
+                Button(loc("Update")) {
+                    openURL(ReleaseCheck.productPageURL)
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity)
+
+                Button(loc("Not Now")) { dismiss() }
+                    .controlSize(.large)
+            }
+            .padding(.horizontal, 22)
+            .padding(.bottom, 10)
+        }
+        .padding(.top, 24)
     }
 }
 

@@ -3,6 +3,7 @@
 //  Umless
 //
 
+import StoreKit
 import SwiftUI
 
 /// The bottom bar: what the edit will do, the export button, and — once a file
@@ -15,7 +16,11 @@ struct ExportBar: View {
     @Bindable var model: AppModel
 
     @State private var saveState = SaveState.idle
+    /// Set when a save crosses the threshold; spent when the confirmation
+    /// sheet closes, so the rating dialog never lands on top of it.
+    @State private var askForReviewIfEarned = false
     @State private var isConfirmingSave = false
+    @Environment(\.requestReview) private var requestReview
 
     private enum SaveState: Equatable {
         case idle, saving, saved, failed
@@ -61,7 +66,11 @@ struct ExportBar: View {
                 .disabled(model.plan.isEmpty)
             }
         }
-        .sheet(isPresented: $isConfirmingSave) {
+        .sheet(isPresented: $isConfirmingSave, onDismiss: {
+            guard askForReviewIfEarned else { return }
+            askForReviewIfEarned = false
+            requestReview()
+        }) {
             SavedToPhotosSheet()
                 .presentationDetents([.height(320)])
                 .presentationDragIndicator(.visible)
@@ -135,6 +144,9 @@ struct ExportBar: View {
             try await VideoLibrary.save(url)
             saveState = .saved
             isConfirmingSave = true
+            // Counted here rather than when the export finishes: on iOS the
+            // video is only really the user's once it is in their library.
+            askForReviewIfEarned = ReviewPrompt.recordFinishedVideo()
         } catch {
             saveState = .failed
             model.errorMessage = error.localizedDescription

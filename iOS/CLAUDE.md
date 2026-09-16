@@ -34,10 +34,11 @@ The app is two independent Xcode projects with no shared package:
 - macOS — `../Mac`
 - iOS — `../iOS` (here)
 
-Twelve engine files are **byte-identical copies** in both `Umless/` folders:
+Fourteen engine files are **byte-identical copies** in both `Umless/` folders:
 `SourceVideo`, `AudioExtractor`, `CutPlan`, `VideoExporter`, `FillerAnalyzer`,
 `UmlessError`, `ProgressThrottle`, `Localization`, `PlayerController`,
-`AppModel`, `TimelineBar`, `Appearance` — as is `UhmModel.bundle`.
+`AppModel`, `TimelineBar`, `Appearance`, `ReleaseCheck`, `ReviewPrompt` — as is
+`UhmModel.bundle`.
 
 `Localizable.xcstrings` is **not** one of them: the shared keys carry identical
 translations, but each platform adds its own copy ("this Mac's Neural Engine"

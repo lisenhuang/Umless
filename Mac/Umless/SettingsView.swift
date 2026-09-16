@@ -29,6 +29,14 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
             }
+
+            Section {
+                // Straight to the product page rather than a version lookup:
+                // the Mac app makes no network request of its own, and the
+                // store page shows what the current build is anyway.
+                Link(loc("Check for Updates"), destination: ReleaseCheck.productPageURL)
+                Link(loc("Write a Review"), destination: ReleaseCheck.writeReviewURL)
+            }
         }
         .formStyle(.grouped)
         .safeAreaInset(edge: .bottom, spacing: 0) {
