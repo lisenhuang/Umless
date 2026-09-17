@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+/*
+ * Colours follow the app: system blue for actions, amber for filler marks.
+ * Light and dark come from the reader's system setting, the same default the
+ * app uses.
+ */
+:root {
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --line: rgb(0 0 0 / 0.08);
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --filler: #ff9500;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b0d;
+    --surface: #161618;
+    --text: #f5f5f7;
+    --muted: #a1a1a6;
+    --line: rgb(255 255 255 / 0.1);
+    --accent: #2997ff;
+    --accent-hover: #4aa7ff;
+    --filler: #ff9f0a;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-filler: var(--filler);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .link {
+    color: var(--accent);
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration: underline;
+  }
+}
