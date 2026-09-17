@@ -3,6 +3,8 @@
 The public site for Umless: a landing page with the App Store link and QR code,
 plus the pages App Store Connect links to. English and Simplified Chinese.
 
+**Live at <https://umless-app.vercel.app>**
+
 | Path | Page | Used in App Store Connect as |
 | --- | --- | --- |
 | `/` · `/zh` | Home | Marketing URL |
@@ -26,9 +28,9 @@ pnpm typecheck && pnpm lint && pnpm build    # before every commit
 2. **Root Directory → Edit → `Web`**. Next.js and pnpm are detected from here.
 3. **Deploy.** Every push to `main` redeploys.
 
-The site finds its own address from Vercel. With a custom domain, set
-`NEXT_PUBLIC_SITE_URL` (for example `https://umless.app`) so canonical links and
-the sitemap use it.
+Canonical links and the sitemap use `https://umless-app.vercel.app`, fixed in
+`src/lib/site.ts`. With a custom domain, set `NEXT_PUBLIC_SITE_URL` (for example
+`https://umless.app`) in Vercel — and move the apps' links in `Store.swift` too.
 
 ## Where things live
 

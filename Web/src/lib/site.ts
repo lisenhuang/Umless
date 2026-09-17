@@ -26,15 +26,12 @@ export const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itu
 export const LAST_UPDATED = new Date('2026-09-18T00:00:00Z')
 
 /**
- * The public origin, for canonical URLs, the sitemap and Open Graph. Vercel
- * provides its production hostname at build time; a custom domain can be set
- * explicitly with NEXT_PUBLIC_SITE_URL.
+ * The public origin, for canonical URLs, the sitemap and Open Graph. Fixed,
+ * because the apps and App Store Connect link to this host — Vercel's own
+ * production hostname named a different alias, one that serves nothing.
+ * NEXT_PUBLIC_SITE_URL overrides it, for a custom domain.
  */
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : 'http://localhost:3000')
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://umless-app.vercel.app'
 
 export type Locale = 'en' | 'zh'
 

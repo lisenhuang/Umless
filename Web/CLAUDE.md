@@ -17,9 +17,10 @@
 
 ## Rules the site depends on
 
-- **The English paths are fixed.** `/support`, `/privacy` and `/terms` are
-  entered in App Store Connect, and the app links to them. Moving one breaks a
-  link Apple checks.
+- **The address is fixed.** The site is `https://umless-app.vercel.app`, and
+  `/support`, `/privacy` and `/terms` are entered in App Store Connect. The apps
+  link to `/privacy` and `/terms` from their purchase screen (`Store.swift` in
+  `Mac/` and `iOS/`). Moving a page or the host breaks a link Apple checks.
 - **Both languages change together.** `src/content/en.ts` and `zh.ts` share one
   type, so a missing field fails the build — but a changed *meaning* does not.
   Update the other file in the same change.
