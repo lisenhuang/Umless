@@ -69,5 +69,9 @@ other, whether or not its code changed. See either project's `CLAUDE.md`.
   by reading the code.
 - **Cut boundaries are integer frame ticks.** `CutPlan` and `VideoExporter`
   must snap on the same frame rate, or joins drift by a fraction of a frame.
+- **The minimum OS is set by the model, not the code: iOS 17.0 / macOS 14.0.**
+  `uhm.mlmodelc` is spec version 8 and declares that availability; anything older
+  cannot load it. The app code and the SDK paths Uhm uses need nothing newer, so
+  don't raise the deployment targets without a reason that isn't cosmetic.
 - **The model must stay a `.bundle`.** A bare `.mlmodel` gets compiled and
   renamed by Xcode, which breaks the SDK's filename lookup.

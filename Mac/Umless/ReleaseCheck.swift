@@ -67,9 +67,25 @@ nonisolated enum ReleaseCheck {
               let store = payload.results.first
         else { return .unknown }
 
-        return isNewer(store.version, than: installedVersion)
-            ? .updateAvailable(store.version)
-            : .upToDate
+        guard isNewer(store.version, than: installedVersion) else { return .upToDate }
+        // The minimum reaches back to iOS 17, so a later release that raises it
+        // would otherwise be offered — every day — to people whose phones cannot
+        // install it. A build this device cannot run is not an update it can act
+        // on; for this device, what it has is the latest.
+        if let required = store.minimumOsVersion,
+           !canRun(minimumOS: required) { return .upToDate }
+        return .updateAvailable(store.version)
+    }
+
+    /// Whether this device's OS meets a store build's minimum.
+    static func canRun(minimumOS required: String,
+                       on system: String = currentOSVersion) -> Bool {
+        !isNewer(required, than: system)
+    }
+
+    static var currentOSVersion: String {
+        let v = ProcessInfo.processInfo.operatingSystemVersion
+        return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
     }
 
     /// Compares two dotted version strings numerically, so 1.0.10 sorts above
@@ -80,6 +96,10 @@ nonisolated enum ReleaseCheck {
 
     private struct LookupResponse: Decodable {
         let results: [StoreEntry]
-        struct StoreEntry: Decodable { let version: String }
+        struct StoreEntry: Decodable {
+            let version: String
+            /// The iOS floor of that build — the lookup describes the iOS app.
+            let minimumOsVersion: String?
+        }
     }
 }

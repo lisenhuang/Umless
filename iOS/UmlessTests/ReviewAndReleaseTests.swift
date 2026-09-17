@@ -66,6 +66,18 @@ struct ReleaseCheckTests {
         #expect(ReleaseCheck.isNewer(candidate, than: installed) == newer)
     }
 
+    @Test(arguments: [
+        ("17.0", "17.5.1", true),
+        ("17.0", "17.0", true),
+        ("17.0", "26.0", true),
+        // A release that raised the floor must not be offered to older phones.
+        ("26.0", "17.5", false),
+        ("17.0.1", "17.0", false),
+    ])
+    func onlyOffersBuildsThisDeviceCanRun(required: String, system: String, installable: Bool) {
+        #expect(ReleaseCheck.canRun(minimumOS: required, on: system) == installable)
+    }
+
     @Test func storeLinksCarryTheAppID() {
         #expect(ReleaseCheck.productPageURL.absoluteString.contains(ReleaseCheck.appStoreID))
         #expect(ReleaseCheck.writeReviewURL.absoluteString.contains("action=write-review"))
